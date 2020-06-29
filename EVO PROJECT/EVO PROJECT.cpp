@@ -2,25 +2,25 @@
 #include <ctime>
 #include <stdlib.h>
 #include <stdio.h>
+#define NULL nullptr
 using namespace std;
 
 //declare constant - problem specification, population size
 const int GENE = 30; // Bricks LEGO
-const int CAPACITY = 104; // Budget
-const int POP_SIZE = 10; // Maximum population
-const int WEIGHT[GENE] = { 25, 35, 45, 5, 25, 3, 2, 2 }; // Value for each LEGO bricks
-const float CO_probability = 0.9; // Parameter 1
-const float MUT_PROBABILITY = 0.9; // Parameter 2
-
+const int CAPACITY = 1200; // Budget
+const int POP_SIZE = 20; // Maximum population
+const int VALUE[GENE] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+						 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+						 21, 22, 23, 24, 25, 26, 27, 28, 29, 30}; // Values for each LEGO bricks
+const float PRICE[GENE] = { 0.11, 0.13, 0.15, 0.17, 0.19, 0.21, 0.23, 0.25, 0.27, 0.29,
+						 0.31, 0.33, 0.35, 0.37, 0.39, 0.41, 0.43, 0.45, 0.47, 0.49,
+						 0.51, 0.53, 0.55, 0.57, 0.59, 0.61, 0.63, 0.65, 0.67, 0.69 }; // Prices for each LEGO bricks
 // Chromosome representation
 int chromosome[POP_SIZE][GENE];
-
 // Fitness value
 double fitness[POP_SIZE];
-
 //declare parents data str
 int parents[2][GENE];
-
 //declre children data str
 int children[2][GENE];
 
@@ -30,20 +30,29 @@ void initializePopulation() {
 	srand(time(NULL));
 	for (int c = 0; c < POP_SIZE; c++) {
 		for (int i = 0; i < GENE; i++) {
-			randNum = rand() % 2;
+			randNum = rand() % 100;
 			chromosome[c][i] = randNum;
 		}
 	}
 }
 
-/*
-rand(): Returns a pseudo-random integral number in the range between 0 and RAND_MAX.
-RAND_MAX: This value is library-dependent, but is guaranteed to be at least 32767 on any standard library implementation.
-example:
-v1 = rand() % 100;         // v1 in the range 0 to 99
-v2 = rand() % 100 + 1;     // v2 in the range 1 to 100
-v3 = rand() % 30 + 1985;   // v3 in the range 1985-2014
-*/
+
+void evaluateChromosome() {
+	float eachChromosome = 0.0, eachBricks = 0.0;
+	for (int c = 0; c < POP_SIZE; c++) {
+		eachChromosome = 0.0;
+		for (int i = 0; i < GENE; i++) {
+			eachBricks = 0.0;
+			eachBricks = chromosome[c][i] * PRICE[i];
+			eachChromosome = eachBricks + eachChromosome;
+		}
+		fitness[c] = eachChromosome / (float)CAPACITY;
+		cout << "\tC" << c << "\tDifference\t" << eachChromosome << "\tFV\t" << fitness[c] << endl;
+	}
+
+}
+
+
 void printChromosome() {
 	for (int c = 0; c < POP_SIZE; c++) {
 		cout << "\tC" << c << "\t";
@@ -53,20 +62,7 @@ void printChromosome() {
 		cout << endl;
 	}
 }
-void evaluateChromosome() {
-	int accumulatedWeight = 0;
-	for (int c = 0; c < POP_SIZE; c++) {
-		accumulatedWeight = 0;
-		for (int i = 0; i < GENE; i++) {
-			if (chromosome[c][i] == 1) {
-				accumulatedWeight = accumulatedWeight + WEIGHT[i];
-			}
-		}
-		fitness[c] = abs(CAPACITY - accumulatedWeight) / (float)CAPACITY;
-		cout << "\tC" << c << "\tDifference\t" << abs(CAPACITY - accumulatedWeight) << "\tFV\t" << fitness[c] << endl;
-	}
 
-}
 
 void parentSelection() {
 	int player1, player2;
@@ -80,7 +76,7 @@ void parentSelection() {
 			} while (player1 == player2);
 
 
-			if (fitness[player1] <= fitness[player2]) {
+			if (fitness[player1] >= fitness[player2]) {
 				indexParents[p] = player1;
 			}
 			else {
@@ -103,98 +99,22 @@ void parentSelection() {
 	}
 }
 
-void crossOver() {
-	float prob = 0.0;
-	int co_point;
-
-	for (int p = 0; p < 2; p++) {//Copy parents to children
-		for (int g = 0; g < GENE; g++) {
-			children[p][g] = parents[p][g];
-		}
-	}
-
-	//generate 0-1
-	prob = ((rand() % 10) + 1) / 10.0;
-	if (prob < CO_probability) {//crossover happen
-		co_point = rand() % GENE;
-		cout << "\n\t Children crossover at " << co_point;
-
-		for (int g = co_point; g < GENE; g++) {
-			children[0][g] = parents[1][g];
-			children[1][g] = parents[0][g];
-		}
-	}
-	else {//crossover did not crossover
-		cout << "\n\t Crossover did not happen ";
-	}
-
-	//output
-
-	for (int c = 0; c < 2; c++) {
-		cout << "\n\t Children " << c + 1;
-
-		for (int g = 0; g < GENE; g++) {
-			cout << children[c][g] << " ";
-		}
-	}
-}
-
-void mutation() {
-	float prob;
-	int mut_point;
-	for (int c = 0; c < 2; c++) {
-		prob = (rand() % 11) / 10.0; // generating the probability value
-		if (prob < MUT_PROBABILITY) {
-			mut_point = rand() % GENE;
-			cout << "\n\t Mutation at gene = " << mut_point;
-			if (children[c][mut_point] == 0)
-				children[c][mut_point] = 1;
-			else
-				children[c][mut_point] = 0;
-		}
-		else {
-			cout << "\n\t mutation not happen";
-		}
-	}//End of For
-	for (int c = 0; c < 2; c++) {
-		cout << "\n\t Children " << c + 1 << " after mutation ";
-		for (int g = 0; g < GENE; g++) {
-			cout << children[c][g] << " ";
-		}
-	}
-}
 
 int main() {
 	cout << "\nGA START! \n";
-	cout << "First generation \n\n";
+
 	cout << "\nINITIALIZATION... \n";
-
-	//LAB 3
 	initializePopulation();
-	getchar();
-
-	//LAB 3
-	cout << "\nPRINT INITIAL POPULATION \n";
 	printChromosome();
 	getchar();
 
-	//LAB 4
-	cout << "\nEVALUATE CHROMOSOME \n";
+	cout << "\EVALUATING... \n";
 	evaluateChromosome();
 	getchar();
 
-	//LAB 5
-	cout << "\nPARENT SELECTION \n";
+	cout << "\SELECTING... \n";
 	parentSelection();
 	getchar();
 
-	//LAB 6
-	cout << "\nCROSSOVER \n";
-	crossOver();
-	getchar();
-
-	//LAB 7
-	cout << "\nMUTATION \n";
-	mutation();
-	getchar();
+	return 0;
 }
