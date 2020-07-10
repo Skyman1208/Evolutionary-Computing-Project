@@ -1,4 +1,5 @@
 #include <iostream>
+#include<fstream>
 #include <ctime>
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,21 +8,19 @@ using namespace std;
 
 //declare constant - problem specification, population size
 const int GENE = 30; // Bricks LEGO
-const int CAPACITY = 1200; // Budget
-const int POP_SIZE = 30; // Maximum population
-const float MUT_PROBABILITY = 0.3;
-const float CO_probability = 0.8;
-double bestFitness = 99.9;
+const int CAPACITY = 2200; // Budget
+const int POP_SIZE = 1000; // Maximum population
+const float MUT_PROBABILITY = 0.1;
+const float CO_probability = 0.9;
+double bestFitness = 0.0;
 double avgFitness = 0.0;
-const int MAX_GENERATION = 10;
+const int MAX_GENERATION = 100;
 int bestChromosome[GENE];
+ofstream avgBestFitnessFile;
 
-const int VALUE[GENE] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-						 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-						 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 }; // Values for each LEGO bricks
-const float PRICE[GENE] = { 0.11, 0.13, 0.15, 0.17, 0.19, 0.21, 0.23, 0.25, 0.27, 0.29,
-						 0.31, 0.33, 0.35, 0.37, 0.39, 0.41, 0.43, 0.45, 0.47, 0.49,
-						 0.51, 0.53, 0.55, 0.57, 0.59, 0.61, 0.63, 0.65, 0.67, 0.69 }; // Prices for each LEGO bricks
+const float PRICE[GENE] = { 1, 1.2, 1.4, 1.6, 1.8, 2, 2.2, 2.4, 2.6, 2.8,
+						 3, 1.3, 1.5, 1.7, 1.9, 2.1, 2.3, 2.5, 2.7, 2.9,
+						 0.2, 0.4, 0.6, 0.8, 0.1, 0.3, 0.5, 0.7, 0.9, 1.1}; // Prices for each LEGO bricks
 // Chromosome representation
 int chromosome[POP_SIZE][GENE];
 // Fitness value
@@ -36,15 +35,13 @@ int newChromosome[POP_SIZE][GENE];
 int newChromoCounter = 0;
 
 
-
-
 void initializePopulation() {
 	int randNum;
 	//initialize random seed
 	srand(time(NULL));
 	for (int c = 0; c < POP_SIZE; c++) {
 		for (int i = 0; i < GENE; i++) {
-			randNum = rand() % 150;
+			randNum = rand() % 100;
 			chromosome[c][i] = randNum;
 		}
 	}
@@ -53,18 +50,19 @@ void initializePopulation() {
 
 
 void evaluateChromosome() {
-	float totalPrice = 0.0, totalBricks = 0.0;
+	float totalPrice = 0.0, totalPriceEachBricks = 0.0, totalBricks = 0.0;
 	for (int c = 0; c < POP_SIZE; c++) {
-		totalPrice = 0.0;
+		totalPrice = 0.0, totalBricks = 0.0;
 		for (int i = 0; i < GENE; i++) {
-			totalBricks = 0.0;
-			totalBricks = chromosome[c][i] * PRICE[i];
-			totalPrice = totalBricks + totalPrice;
+			totalPriceEachBricks = 0.0;
+			totalBricks = chromosome[c][i] + totalBricks;
+			totalPriceEachBricks = chromosome[c][i] * PRICE[i];
+			totalPrice = totalPriceEachBricks + totalPrice;
 		}
-		float X = 1 - (abs((float)CAPACITY - totalPrice) / (float)CAPACITY);
-		float Y = totalBricks / (150 * 30);
+		float X = abs((float)CAPACITY - totalPrice) / (float)CAPACITY;
+		float Y = totalBricks/(100 * GENE);
 		fitness[c] = (X + Y) / 2;
-		cout << "\tC" << c << "\tDifference\t" << totalPrice << "\tFV\t" << fitness[c] << endl;
+		//cout << "\tC" << c << "\tDifference\t" << X << "\tFV\t" << fitness[c] << endl;
 	}
 
 }
@@ -92,38 +90,28 @@ void parentSelection() {
 				player2 = rand() % POP_SIZE;
 			} while (player1 == player2);
 
-			if (fitness[player1] > 1) {
+			if (fitness[player1] >= fitness[player2]) {
+				indexParents[p] = player1;
+			}
+			else {
 				indexParents[p] = player2;
 			}
 
-			if (fitness[player2] > 1) {
-				indexParents[p] = player1;
-			}
-
-			if (fitness[player1] <= 1 && fitness[player2] <= 1) {
-				if (fitness[player1] <= fitness[player2]) {
-					indexParents[p] = player1;
-				}
-				else {
-					indexParents[p] = player2;
-				}
-			}
-
-			cout << "\n\t Players: " << player1 << " VS " << player2;
-			cout << "\n\t Fitness: " << fitness[player1] << " VS " << fitness[player2];
-			cout << "\n\t Winner: " << indexParents[p];
+			//cout << "\n\t Players: " << player1 << " VS " << player2;
+			//cout << "\n\t Fitness: " << fitness[player1] << " VS " << fitness[player2];
+			//cout << "\n\t Winner: " << indexParents[p];
 		}//end of tournament
 	} while (indexParents[0] == indexParents[1]);
 
 	for (int p = 0; p < 2; p++) {
-		cout << "\n\t Parents " << p + 1 << " : ";
+		//cout << "\n\t Parents " << p + 1 << " : ";
 
 		for (int g = 0; g < GENE; g++) {
 			parents[p][g] = chromosome[indexParents[p]][g];
-			cout << parents[p][g] << " ";
+			//cout << parents[p][g] << " ";
 		}
 	}
-	cout << endl;
+	//cout << endl;
 }
 
 
@@ -146,9 +134,9 @@ void crossover()
 		co_point1 = rand() % GENE;
 		if (co_point < co_point1)
 		{
-			cout << "\n\t Children crossover at " << co_point;
-			cout << "\n\t Children crossover at " << co_point1;
-			cout << endl;
+			//cout << "\n\t Children crossover at " << co_point;
+			//cout << "\n\t Children crossover at " << co_point1;
+			//cout << endl;
 			for (int g = co_point; g < GENE; g++)
 			{
 				children[0][g] = parents[1][g];
@@ -162,9 +150,9 @@ void crossover()
 		}
 		else if (co_point > co_point1)
 		{
-			cout << "\n\t Children crossover at " << co_point1;
-			cout << "\n\t Children crossover at " << co_point;
-			cout << endl;
+			//cout << "\n\t Children crossover at " << co_point1;
+			//cout << "\n\t Children crossover at " << co_point;
+			//cout << endl;
 			for (int g = co_point1 - 1; g < GENE; g++)
 			{
 				children[0][g] = parents[1][g];
@@ -177,18 +165,18 @@ void crossover()
 			}
 		}
 	}
-	else
-	{
-		cout << "\n\t Crossover did not happen ";
-	}
-	for (int c = 0; c < 2; c++)
-	{
-		cout << "\n\t Children " << c + 1 << ": ";
-		for (int g = 0; g < GENE; g++)
-		{
-			cout << children[c][g] << " ";
-		}
-	}
+	//else
+	//{
+	//	cout << "\n\t Crossover did not happen ";
+	//}
+	//for (int c = 0; c < 2; c++)
+	//{
+		//cout << "\n\t Children " << c + 1 << ": ";
+		//for (int g = 0; g < GENE; g++)
+		//{
+		//	cout << children[c][g] << " ";
+		//}
+	//}
 }                  // end crossover function
 
 
@@ -200,16 +188,16 @@ void mutation()
 		prob = (rand() % 11) / 20.0;
 		if (prob < MUT_PROBABILITY) {
 			mut_point = rand() % GENE;
-			cout << "\n\t Mutation at gene " << mut_point;
+			//cout << "\n\t Mutation at gene " << mut_point;
 			if (children[c][mut_point] == 1)
 				children[c][mut_point] = 0;
 			else
 				children[c][mut_point] = 1;
 		}
-		else
-			cout << "\n\t Mutation did not happen.\n";
+		//else
+			//cout << "\n\t Mutation did not happen.\n";
 	}
-	for (int c = 0; c < 2; c++)
+	/*for (int c = 0; c < 2; c++)
 	{
 		cout << "\n\t Children" << c + 1 << " " << "after mutation: ";
 		for (int g = 0; g < GENE; g++)
@@ -217,7 +205,7 @@ void mutation()
 			cout << children[c][g] << " ";
 		}
 	}
-	cout << endl;
+	cout << endl;*/
 }                       //end of mutation
 
 
@@ -229,15 +217,15 @@ void survivalSelection()
 		}
 		newChromoCounter++;
 	}
-	for (int c = 0; c < newChromoCounter; c++)
-	{
-		cout << "\n\t New Chromosome " << c << ": ";
-		for (int g = 0; g < GENE; g++)
-		{
-			cout << newChromosome[c][g] << " ";
-		}
-	}
-	cout << endl;
+	//for (int c = 0; c < newChromoCounter; c++)
+	//{
+		//cout << "\n\t New Chromosome " << c << ": ";
+		//for (int g = 0; g < GENE; g++)
+		//{
+		//	cout << newChromosome[c][g] << " ";
+		//}
+	//}
+	//cout << endl;
 }
 
 
@@ -251,7 +239,7 @@ void copyChromosome() {
 
 float recordBestFitness() {
 	for (int c = 0; c < POP_SIZE; c++) {
-		if (bestFitness > fitness[c]) {
+		if (fitness[c] >= bestFitness) {
 			bestFitness = fitness[c];
 			for (int g = 0; g < GENE; g++) {
 				bestChromosome[g] = chromosome[c][g];
@@ -260,76 +248,79 @@ float recordBestFitness() {
 	}//close for c
 
 	//output for the best chromosome to monitor
-	cout << "\n\t Best Fitness: " << bestFitness;
-	cout << "\n\t Best Chromosome: ";
-	for (int g = 0; g < GENE; g++) {
-		cout << bestChromosome[g] << " ";
-	}
-	cout << endl;
+	//cout << "\n\t Best Fitness: " << bestFitness;
+	//cout << "\n\t Best Chromosome: ";
+	//for (int g = 0; g < GENE; g++) {
+	//	cout << bestChromosome[g] << " ";
+	//}
+	//cout << endl;
 
 	return bestFitness;
 }
 float calcAvgFitness() {
 	double sum = 0;
 	for (int c = 0; c < POP_SIZE; c++) {
-		sum += fitness[c];
+		sum = sum + fitness[c];
 	}
 	avgFitness = sum / POP_SIZE;
 
 	//output to monitor
-	cout << "\n\t Average Fitness: " << avgFitness << endl;
+	//cout << "\n\t Average Fitness: " << avgFitness << endl;
 
 	return avgFitness;
 }
 
 int main()
 {
-	float averageFitness[MAX_GENERATION], AF = 0;
-	float bestFitness[MAX_GENERATION], BF = 0;
+	float averageFitness[MAX_GENERATION];
+	float bestFitness[MAX_GENERATION];
 
 	cout << "\nGA START! \n";
-	cout << "\nINITIALIZATION... \n";
+	//cout << "\nINITIALIZATION... \n";
 	initializePopulation();
 	//getchar();
 
 	for (int g = 0; g < MAX_GENERATION; g++) {//start of generation
 
-		cout << "\nGENERATION" << " " << g + 1 << endl;
-		cout << "\n\tPRINT POPULATION \n";
-		printChromosome();
-		cout << "\n\tEVALUATE CHROMOSOME \n";
+		cout << "\nGENERATION" << " " << g + 1;
+		//cout << "\n\tPRINT POPULATION \n";
+		//printChromosome();
+		//cout << "\n\tEVALUATE CHROMOSOME \n";
 		evaluateChromosome();
 		//getchar();
 
 		newChromoCounter = 0;
 		for (int i = 0; i < POP_SIZE / 2; i++) {
-			cout << "\n\tPARENT SELECTION \n";
+			//cout << "\n\tPARENT SELECTION \n";
 			parentSelection();
-			cout << "\n\tCROSSOVER \n";
+			//cout << "\n\tCROSSOVER \n";
 			crossover();
-			cout << "\n\n\tMUTATION \n";
+			//cout << "\n\n\tMUTATION \n";
 			mutation();
-			cout << "\n\tSURVIVAL SELECTION \n";
+			//cout << "\n\tSURVIVAL SELECTION \n";
 			survivalSelection();
-			cout << "\n\tBEST FITNESS AND BEST CHROMOSOME \n";
-			BF = recordBestFitness();
-			cout << "\n\tAVERAGE FITNESS \n";
-			AF = calcAvgFitness();
 		}
-		cout << "\n\tNEW CHROMOSOMES COPIED TO CHROMOSOME\n";
+		//cout << "\n\tBEST FITNESS AND BEST CHROMOSOME \n";
+		bestFitness[g] = recordBestFitness();
+		//cout << "\n\tAVERAGE FITNESS \n";
+		averageFitness[g] = calcAvgFitness();
+
+		//cout << "\n\tNEW CHROMOSOMES COPIED TO CHROMOSOME\n";
 		copyChromosome();
 		//getchar();
-
-		averageFitness[g] = AF;
-		bestFitness[g] = BF;
 	}
 
 
+	avgBestFitnessFile.open("averageBest_Fitness.csv");
+	avgBestFitnessFile << "Average, Best\n";
 	cout << "\n\n\nAverage\t\tBest\n";
 	for (int j = 0; j < MAX_GENERATION; j++) {
 		cout << averageFitness[j] << "\t";
 		cout << bestFitness[j] << "\n";
+
+		avgBestFitnessFile << averageFitness[j] << "," << bestFitness[j] << "\n";
 	}
+	avgBestFitnessFile.close();
 
 	return 0;
 }
