@@ -1,7 +1,6 @@
 #include <iostream>
 #include<fstream>
 #include <ctime>
-#include <stdlib.h>
 #include <stdio.h>
 #define NULL nullptr
 using namespace std;
@@ -34,14 +33,13 @@ int newChromosome[POP_SIZE][GENE];
 //declare the new hromosome counter
 int newChromoCounter = 0;
 
-
 void initializePopulation() {
 	int randNum;
 	//initialize random seed
 	srand(time(NULL));
 	for (int c = 0; c < POP_SIZE; c++) {
 		for (int i = 0; i < GENE; i++) {
-			randNum = rand() % CAPACITY;
+			randNum = rand() % 100;
 			chromosome[c][i] = randNum;
 		}
 	}
@@ -59,7 +57,7 @@ void evaluateChromosome() {
 			totalPriceEachBricks = chromosome[c][i] * PRICE[i];
 			totalPrice = totalPriceEachBricks + totalPrice;
 		}
-		float X = abs((float)CAPACITY - totalPrice) / (float)CAPACITY;
+		float X = abs((float)CAPACITY - totalPrice) / ((float)CAPACITY);
 		float Y = totalBricks/(100 * GENE);
 		fitness[c] = (X + Y) / 2;
 		//cout << "\tC" << c << "\tDifference\t" << X << "\tFV\t" << fitness[c] << endl;
@@ -89,6 +87,13 @@ void parentSelection() {
 			do {
 				player2 = rand() % POP_SIZE;
 			} while (player1 == player2);
+
+			/*if (abs(1 - fitness[player1]) <= abs(1 - fitness[player2])) {
+				indexParents[p] = player1;
+			}
+			else {
+				indexParents[p] = player2;
+			}*/
 
 			if (fitness[player1] <= 1 && fitness[player2] <= 1) {
 				if (fitness[player1] >= fitness[player2]) {
@@ -272,11 +277,11 @@ float recordBestFitness() {
 
 	//output for the best chromosome to monitor
 	cout << "\n\tBest Fitness   : ";
-	printf("%.3f", bestFitness);
+	printf("%.2f", bestFitness);
 
 	//output to monitor
 	cout << "\n\tAverage Fitness: ";
-	printf("%.3f", calcAvgFitness());
+	printf("%.2f", calcAvgFitness());
 	cout << endl;
 
 	cout << "\n\tBest Chromosome: ";
@@ -290,20 +295,19 @@ float recordBestFitness() {
 
 int main()
 {
-	int avg = 0, best = 0, bestValue = 0, avgValue = 0, previousBestValue = 0, previousAvgValue = 0, g = 0;
-	float averageFitness[MAX_GENERATION];
-	float bestFitness[MAX_GENERATION];
+	float averageFitness[MAX_GENERATION], bestFitness[MAX_GENERATION], diff = 0.0, diff2 = 0.0, diffValue = 0.0, bestValue = 0.0, avgValue = 0.0;
+	int  diffValueIndicator = 0;
 
 	//cout << "\nINITIALIZATION... \n";
 	initializePopulation();
 	//getchar();
 
 	//for (int g = 0; g < MAX_GENERATION; g++) {//start of generation
+	int g = 0;
 	bool stopLooping = false;
-	while(!stopLooping) 
-	{
+	while(!stopLooping) {
 		system("CLS");
-		cout << "\n\tGA START!\n";
+		cout << "\n\tGA START!\n\n";
 		cout << "\n\tGENERATION" << " " << g + 1;
 		//cout << "\n\tPRINT POPULATION \n";
 		//printChromosome();
@@ -324,44 +328,49 @@ int main()
 		}
 		//cout << "\n\tBEST FITNESS AND BEST CHROMOSOME \n";
 		bestFitness[g] = recordBestFitness();
-		bestValue = recordBestFitness();
+		bestValue = bestFitness[g];
 		//cout << "\n\tAVERAGE FITNESS \n";
 		averageFitness[g] = calcAvgFitness();
-		avgValue = calcAvgFitness();
+		avgValue = averageFitness[g];
 
 		//cout << "\n\tNEW CHROMOSOMES COPIED TO CHROMOSOME\n";
 		copyChromosome();
 		//getchar();
 
-		if (previousBestValue != bestValue) {
-			previousBestValue = bestValue;
-		}
-		else {
-			best++;
-		}
-		if (previousAvgValue != avgValue) {
-			previousAvgValue = avgValue;
-		}
-		else {
-			avg++;
-		}
+		diff = (int)(abs(bestValue - avgValue) * 100 + 0.5);
+		diff = (float)diff / 100;
 
-		if (avg == 3 && best == 3) {
-			stopLooping = true;
+		diff2 = (int)(abs(bestValue - avgValue) * 1000 + 0.5);
+		diff2 = (float)diff2/1000;
+
+		diffValue = (int)((diff2 - diff) * 100 + 0.5);
+		diffValue = (float)diffValue / 100;
+
+		//cout << "\n" << diff2 << " " << diff << " " << diffValue << "\n";
+
+		if (bestValue >= 0.95 && avgValue >= 0.95) {
+			if (diffValue >= 0.0 && diffValue <= 0.02) {
+				diffValueIndicator++;
+				if (diffValueIndicator >= 20) {
+					stopLooping = true;
+				}
+			}
 		}
 		g++;
-		g = MAX_GENERATION;
 	}
 
+	cout << "\n\n\n\tGA DONE!\n";
+
 	avgBestFitnessFile.open("averageBest_Fitness.csv");
-	//avgBestFitnessFile << "Average, Best\n";
-	//cout << "\n\n\n\tAverage  |   Best\n\t------------------\n";
-	for (int j = 0; j < MAX_GENERATION; j++) {
-		/*cout << "\t";
+	avgBestFitnessFile << "Average, Best\n";
+	cout << "\n\n\n\tAverage  |   Best\n\t------------------\n";
+	for (int j = 0; j < g; j++) {
+	//for (int j = 0; j < MAX_GENERATION; j++) {
+		cout << "\t";
 		printf("%.3f", averageFitness[j]);
 		cout << "\t |   ";
 		printf("%.3f", bestFitness[j]);
-		cout << "\n";*/
+		cout << "\n";
 
 		avgBestFitnessFile << averageFitness[j] << "," << bestFitness[j] << "\n";
 	}
