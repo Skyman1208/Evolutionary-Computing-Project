@@ -302,10 +302,10 @@ int main()
 	initializePopulation();
 	//getchar();
 
-	//for (int g = 0; g < MAX_GENERATION; g++) {//start of generation
-	int g = 0;
+	for (int g = 0; g < MAX_GENERATION; g++) {//start of generation
+	/*int g = 0;
 	bool stopLooping = false;
-	while(!stopLooping) {
+	while(!stopLooping) {*/
 		system("CLS");
 		cout << "\n\tGA START!\n\n";
 		cout << "\n\tGENERATION" << " " << g + 1;
@@ -348,7 +348,7 @@ int main()
 
 		//cout << "\n" << diff2 << " " << diff << " " << diffValue << "\n";
 
-		if (bestValue >= 0.95 && avgValue >= 0.95) {
+		/*if (bestValue >= 0.95 && avgValue >= 0.95) {
 			if (diffValue >= 0.0 && diffValue <= 0.02) {
 				diffValueIndicator++;
 				if (diffValueIndicator >= 20) {
@@ -356,7 +356,10 @@ int main()
 				}
 			}
 		}
-		g++;
+		if (g == 400) {
+			stopLooping = true;
+		}
+		g++;*/
 	}
 
 	cout << "\n\n\n\tGA DONE!\n";
@@ -364,8 +367,8 @@ int main()
 	avgBestFitnessFile.open("averageBest_Fitness.csv");
 	avgBestFitnessFile << "Average, Best\n";
 	cout << "\n\n\n\tAverage  |   Best\n\t------------------\n";
-	for (int j = 0; j < g; j++) {
-	//for (int j = 0; j < MAX_GENERATION; j++) {
+	//for (int j = 0; j < g; j++) {
+	for (int j = 0; j < MAX_GENERATION; j++) {
 		cout << "\t";
 		printf("%.3f", averageFitness[j]);
 		cout << "\t |   ";
